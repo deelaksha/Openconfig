@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import AnnotatedCodeBlock from "@/components/codeblock/AnnotatedCodeBlock";
+import DataFlowTrace from "@/components/guide/DataFlowTrace";
 
 export default function PrePostXfmrSection() {
   return (
@@ -147,6 +148,152 @@ export default function PrePostXfmrSection() {
           </div>
         </div>
       </div>
+
+      <h3>🔬 Data Flow Trace — intf_pre_xfmr (hover any line)</h3>
+      <p>Scenario A (allowed): <code>SET /interfaces/interface[name=Ethernet0]/config/mtu = 9100</code></p>
+      <DataFlowTrace
+        title="intf_pre_xfmr — validates before field transformers run"
+        scenario="SET for Ethernet0 — interface exists in Redis"
+        accent="#f97316"
+        steps={[
+          {
+            line: "var intf_pre_xfmr PreXfmrFunc = func(inParams XfmrParams) error {",
+            explain: "Translib calls this BEFORE any field transformer. inParams.oper=SET, inParams.uri contains [name=Ethernet0]. The function returns nil (allow) or an error (reject).",
+            variable: "inParams.oper / inParams.uri",
+            value: 'SET / "/interfaces/interface[name=Ethernet0]/config/mtu"',
+            color: "#f97316",
+          },
+          {
+            line: '    pathInfo := NewPathInfo(inParams.uri)',
+            explain: "Parse the gNMI URI to extract [name=Ethernet0].",
+            variable: "pathInfo",
+            value: 'parsed: { "name": "Ethernet0" }',
+            color: "#3b82f6",
+            highlight: true,
+          },
+          {
+            line: '    intfName := pathInfo.Var("name")',
+            explain: "Extract the interface name. intfName = 'Ethernet0'.",
+            variable: "intfName",
+            value: '"Ethernet0"',
+            color: "#3b82f6",
+            highlight: true,
+          },
+          {
+            line: '    if strings.HasPrefix(intfName, "Mgmt") {',
+            explain: 'strings.HasPrefix("Ethernet0", "Mgmt") = false. Guard passes, block SKIPPED. For Mgmt0 this would be true and we would return error.',
+            variable: 'HasPrefix("Ethernet0", "Mgmt")',
+            value: "false → skip rejection block",
+            color: "#ef4444",
+          },
+          {
+            line: '    portEntry, _ := inParams.dbs[db.ConfigDB].GetEntry("PORT", intfName)',
+            explain: 'Read the PORT|Ethernet0 entry from CONFIG_DB. If Ethernet0 exists in the PORT table, portEntry will be populated. This is a real Redis read!',
+            variable: "portEntry",
+            value: "{ admin_status: 'up', mtu: '9100', speed: '40000' }  ← populated",
+            color: "#f97316",
+            highlight: true,
+          },
+          {
+            line: "    if portEntry.IsPopulated() == false {",
+            explain: "portEntry IS populated (Ethernet0 exists), so IsPopulated() = true and this block is SKIPPED.",
+            variable: "portEntry.IsPopulated()",
+            value: "true → IsPopulated()==false is false → skip",
+            color: "#ef4444",
+          },
+          {
+            line: "    return nil",
+            explain: "Return nil = no error = pre-validation PASSED. Translib now continues to run field transformers (intf_enabled_xfmr, etc.) and then the post transformer.",
+            variable: "return value",
+            value: "nil → proceed to field transformers",
+            color: "#10b981",
+            highlight: true,
+          },
+        ]}
+      />
+
+      <h3>🔬 Data Flow Trace — intf_post_xfmr (hover any line)</h3>
+      <p>
+        Scenario: After <code>SET enabled=false</code> for <code>Loopback0</code>, the post transformer
+        also sets <code>oper_status</code> to mirror the admin status (loopbacks have no physical link).
+      </p>
+      <DataFlowTrace
+        title="intf_post_xfmr — adds oper_status after field transformers built the result map"
+        scenario="SET enabled=false for Loopback0 (field xfmr already set admin_status=down)"
+        accent="#ec4899"
+        steps={[
+          {
+            line: "var intf_post_xfmr PostXfmrFunc = func(inParams XfmrParams, result map[string]map[string]db.Value) error {",
+            explain: 'Translib calls this AFTER all field transformers ran. result already contains: {"PORT": {"Loopback0": {Field: {"admin_status": "down"}}}}. The post xfmr can ADD more fields to this map.',
+            variable: "result (coming in)",
+            value: '{"PORT": {"Loopback0": {"admin_status": "down"}}}',
+            color: "#ec4899",
+          },
+          {
+            line: '    intfName := pathInfo.Var("name")',
+            explain: "Extract interface name from URI. intfName = 'Loopback0'.",
+            variable: "intfName",
+            value: '"Loopback0"',
+            color: "#3b82f6",
+            highlight: true,
+          },
+          {
+            line: '    portTable := result["PORT"]',
+            explain: 'Get the PORT sub-map from the result. This is the map that the field transformer already populated.',
+            variable: "portTable",
+            value: '{"Loopback0": {Field: {"admin_status": "down"}}}',
+            color: "#ec4899",
+            highlight: true,
+          },
+          {
+            line: '    if entry, ok := portTable[intfName]; ok {',
+            explain: "Check if there's a PORT entry for Loopback0. ok=true because field transformer set it. entry = db.Value with admin_status=down.",
+            variable: "entry / ok",
+            value: "{ Field: {admin_status: 'down'} } / true",
+            color: "#ec4899",
+          },
+          {
+            line: '        if adminStatus, ok := entry.Field["admin_status"]; ok {',
+            explain: 'Get admin_status from the field map. adminStatus = "down", ok = true.',
+            variable: "adminStatus / ok",
+            value: '"down" / true',
+            color: "#f59e0b",
+            highlight: true,
+          },
+          {
+            line: '            if strings.HasPrefix(intfName, "Loopback") {',
+            explain: 'strings.HasPrefix("Loopback0", "Loopback") = true. We enter this block and add oper_status.',
+            variable: 'HasPrefix("Loopback0", "Loopback")',
+            value: "true → enter block",
+            color: "#8b5cf6",
+            highlight: true,
+          },
+          {
+            line: '                entry.Field["oper_status"] = adminStatus',
+            explain: 'Add "oper_status" = "down" to the field map. This is a NEW field that was not set by any field transformer — the post xfmr is adding it as a side effect.',
+            variable: 'entry.Field["oper_status"]',
+            value: '"down"  ← new field added!',
+            color: "#10b981",
+            highlight: true,
+          },
+          {
+            line: '                result["PORT"][intfName] = entry',
+            explain: 'Write the modified entry back into the result map. Now result contains BOTH admin_status AND oper_status for Loopback0.',
+            variable: "result (modified)",
+            value: '{"PORT": {"Loopback0": {"admin_status":"down", "oper_status":"down"}}}',
+            color: "#10b981",
+            highlight: true,
+          },
+          {
+            line: "    return nil",
+            explain: 'Return nil = post transformer succeeded. Translib now writes the MODIFIED result to Redis: HSET PORT|Loopback0 admin_status "down" oper_status "down".',
+            variable: "Redis write",
+            value: 'HSET PORT|Loopback0 admin_status "down" oper_status "down"',
+            color: "#10b981",
+            highlight: true,
+          },
+        ]}
+      />
     </section>
   );
 }

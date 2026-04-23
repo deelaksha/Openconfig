@@ -200,6 +200,141 @@ export default function SubtreeXfmrSection() {
           </div>
         </div>
       </div>
+
+      <h3>🔬 Data Flow Trace — acl_sets_xfmr SET direction (hover any line)</h3>
+      <p>
+        Client sends: <code>SET /acl/acl-sets/acl-set[name=MY_ACL]</code> with type=L3 and one rule (seq=10, src=10.0.0.0/8, action=ACCEPT).
+        Watch how the result map is built step by step.
+      </p>
+      <DataFlowTrace
+        title="acl_sets_xfmr — SET direction (builds 2 Redis tables)"
+        scenario="gNMI SET: Create ACL MY_ACL with 1 rule"
+        accent="#ef4444"
+        steps={[
+          {
+            line: "var acl_sets_xfmr SubtreeXfmrFunc = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {",
+            explain: "Translib calls this. inParams.oper=SET, inParams.param = the full OpenConfig ACL tree (aclObj). inParams.uri = the path including [name=MY_ACL].",
+            variable: "inParams.oper / inParams.uri",
+            value: 'SET / "/acl/acl-sets/acl-set[name=MY_ACL]"',
+            color: "#ef4444",
+          },
+          {
+            line: "    result := make(map[string]map[string]db.Value)",
+            explain: "Create the outer map. This is the return value. Structure: result[tableName][redisKey] = db.Value{Field: map}. Currently completely empty.",
+            variable: "result",
+            value: "{}  ← outer map, empty",
+            color: "#8b5cf6",
+          },
+          {
+            line: "    if inParams.oper == SET {",
+            explain: "oper IS SET, so we enter this block. The entire write path is inside here.",
+            variable: "branch taken",
+            value: "SET block",
+            color: "#f59e0b",
+            highlight: true,
+          },
+          {
+            line: '        pathInfo := NewPathInfo(inParams.uri)',
+            explain: "Parse the URI to extract list key variables. The ACL name is embedded in [name=MY_ACL] in the path.",
+            variable: "pathInfo",
+            value: 'parsed: { "name": "MY_ACL" }',
+            color: "#3b82f6",
+            highlight: true,
+          },
+          {
+            line: '        aclName := pathInfo.Var("name")',
+            explain: 'Extract the ACL name from [name=MY_ACL] in the path. aclName = "MY_ACL".',
+            variable: "aclName",
+            value: '"MY_ACL"',
+            color: "#3b82f6",
+            highlight: true,
+          },
+          {
+            line: "        aclObj := inParams.param.(*ocbinds.OpenconfigAcl_Acl_AclSets)",
+            explain: "Type-assert inParams.param to the generated Go struct for AclSets. This gives us structured access to all OC fields: aclObj.Type, aclObj.Description, aclObj.AclEntries.",
+            variable: "aclObj",
+            value: "{ Type: L3, Description: 'My ACL', AclEntries: [{seq:10, src:10.0.0.0/8}] }",
+            color: "#06b6d4",
+            highlight: true,
+          },
+          {
+            line: '        result["ACL_TABLE"] = make(map[string]db.Value)',
+            explain: 'Initialize the inner map for ACL_TABLE. Now result has one key: "ACL_TABLE" pointing to an empty map.',
+            variable: "result",
+            value: '{"ACL_TABLE": {}}',
+            color: "#3b82f6",
+            highlight: true,
+          },
+          {
+            line: '        result["ACL_TABLE"][aclName] = db.Value{',
+            explain: 'Create a db.Value entry keyed by aclName ("MY_ACL"). This will become the Redis hash key. The full Redis key will be: ACL_TABLE|MY_ACL.',
+            variable: "result[\"ACL_TABLE\"]",
+            value: '{"MY_ACL": {Field: ...}}',
+            color: "#3b82f6",
+          },
+          {
+            line: '            "type":        aclTypeToSonic(aclObj.Type),',
+            explain: 'aclTypeToSonic() converts OC enum (L3) to SONiC string ("L3" or "IP"). Sets result["ACL_TABLE"]["MY_ACL"].Field["type"] = "L3".',
+            variable: 'result["ACL_TABLE"]["MY_ACL"].Field["type"]',
+            value: '"L3"',
+            color: "#f59e0b",
+            highlight: true,
+          },
+          {
+            line: '            "policy_desc": aclObj.Description,',
+            explain: 'Direct copy: OC description string → Redis field "policy_desc". No conversion needed.',
+            variable: 'result["ACL_TABLE"]["MY_ACL"].Field["policy_desc"]',
+            value: '"My ACL"',
+            color: "#f59e0b",
+          },
+          {
+            line: '        result["ACL_RULE"] = make(map[string]db.Value)',
+            explain: 'Initialize the inner map for ACL_RULE. Now result has TWO keys: "ACL_TABLE" and "ACL_RULE".',
+            variable: "result",
+            value: '{"ACL_TABLE": {MY_ACL:...}, "ACL_RULE": {}}',
+            color: "#ec4899",
+            highlight: true,
+          },
+          {
+            line: "        for seqId, entry := range aclObj.AclEntries.AclEntry {",
+            explain: "Iterate over each ACL rule entry. In our scenario there is 1 entry: seqId=10, with src=10.0.0.0/8 and action=ACCEPT.",
+            variable: "seqId / entry (iteration 1)",
+            value: "10 / { src: 10.0.0.0/8, action: ACCEPT }",
+            color: "#ec4899",
+          },
+          {
+            line: '            ruleKey := fmt.Sprintf("%s|RULE_%d", aclName, seqId)',
+            explain: 'Build compound Redis key: "MY_ACL" + "|RULE_" + "10" = "MY_ACL|RULE_10". This is the hash key within the ACL_RULE table.',
+            variable: "ruleKey",
+            value: '"MY_ACL|RULE_10"',
+            color: "#ec4899",
+            highlight: true,
+          },
+          {
+            line: '                "SRC_IP":        entry.Ipv4.Config.SourceAddress,',
+            explain: 'Map OC source-address field → Redis "SRC_IP" field. Value comes from the OC struct.',
+            variable: 'result["ACL_RULE"]["MY_ACL|RULE_10"].Field["SRC_IP"]',
+            value: '"10.0.0.0/8"',
+            color: "#f59e0b",
+            highlight: true,
+          },
+          {
+            line: '                "PACKET_ACTION": actionToSonic(entry.Actions.Config.ForwardingAction),',
+            explain: 'Convert OC enum (ACCEPT) to SONiC string. actionToSonic(ACCEPT) = "FORWARD".',
+            variable: 'result["ACL_RULE"]["MY_ACL|RULE_10"].Field["PACKET_ACTION"]',
+            value: '"FORWARD"',
+            color: "#f59e0b",
+          },
+          {
+            line: "    return result, nil",
+            explain: 'Returns the complete result map with 2 table entries. Translib writes both in one atomic Redis transaction: HSET ACL_TABLE|MY_ACL type "L3" ... and HSET ACL_RULE|MY_ACL|RULE_10 SRC_IP "10.0.0.0/8" ...',
+            variable: "Redis writes (atomic)",
+            value: "ACL_TABLE|MY_ACL + ACL_RULE|MY_ACL|RULE_10",
+            color: "#10b981",
+            highlight: true,
+          },
+        ]}
+      />
     </section>
   );
 }
