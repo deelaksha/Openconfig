@@ -34,9 +34,9 @@ export default function AnnotationGuidePage() {
           Every transformer type — annotation file, Go function, line-by-line explanation, and visual mapping.
           After reading this page you can write any annotation from scratch without support.
         </p>
-        <div className="rounded-2xl border p-4 my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
-          <div className="text-xs font-semibold mb-3" style={{ color: "var(--text-primary)" }}>📖 What this guide covers</div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-4 my-4 sm:my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
+          <div className="text-xs font-semibold mb-2 sm:mb-3" style={{ color: "var(--text-primary)" }}>📖 What this guide covers</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
             {[
               { n: "1", t: "Annotation Anatomy", c: "#3b82f6" },
               { n: "2", t: "Direct Mapping", c: "#10b981" },

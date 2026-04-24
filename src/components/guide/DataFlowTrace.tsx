@@ -21,27 +21,38 @@ interface DataFlowTraceProps {
 
 export default function DataFlowTrace({ title, scenario, steps, accent = "#3b82f6" }: DataFlowTraceProps) {
   const [hoveredLine, setHoveredLine] = useState<number | null>(null);
+  const [tappedLine, setTappedLine] = useState<number | null>(null);
+
+  // On mobile, use tap instead of hover
+  const activeLine = tappedLine ?? hoveredLine;
+
+  const handleTap = (i: number) => {
+    setTappedLine(tappedLine === i ? null : i);
+  };
 
   return (
     <div className="rounded-2xl border overflow-hidden my-6" style={{ borderColor: `${accent}30` }}>
       {/* Header */}
-      <div className="px-5 py-3 flex items-center justify-between flex-wrap gap-2"
+      <div className="px-3 sm:px-5 py-3 flex items-center justify-between flex-wrap gap-2"
         style={{ background: `${accent}10`, borderBottom: `1px solid ${accent}20` }}>
-        <div>
+        <div className="min-w-0">
           <div className="text-xs font-bold" style={{ color: accent }}>{title}</div>
-          <div className="text-[10px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+          <div className="text-[10px] mt-0.5 break-words" style={{ color: "var(--text-tertiary)" }}>
             📍 Scenario: <span style={{ color: accent }}>{scenario}</span>
           </div>
         </div>
-        <div className="text-[10px] px-2 py-1 rounded-full" style={{ background: `${accent}15`, color: accent }}>
+        <div className="text-[10px] px-2 py-1 rounded-full shrink-0 hidden sm:block" style={{ background: `${accent}15`, color: accent }}>
           Hover any line to pin explanation
+        </div>
+        <div className="text-[10px] px-2 py-1 rounded-full shrink-0 sm:hidden" style={{ background: `${accent}15`, color: accent }}>
+          Tap any line for details
         </div>
       </div>
 
       {/* Two-panel layout: code + live explanation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ background: "var(--bg-code)" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 data-flow-grid" style={{ background: "var(--bg-code)" }}>
         {/* LEFT: Annotated code */}
-        <div className="border-r" style={{ borderColor: "var(--border-secondary)" }}>
+        <div className="lg:border-r" style={{ borderColor: "var(--border-secondary)" }}>
           {steps.map((step, i) => (
             <motion.div
               key={i}
@@ -49,31 +60,32 @@ export default function DataFlowTrace({ title, scenario, steps, accent = "#3b82f
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.04 }}
-              onMouseEnter={() => setHoveredLine(i)}
+              onMouseEnter={() => { setHoveredLine(i); setTappedLine(null); }}
               onMouseLeave={() => setHoveredLine(null)}
+              onClick={() => handleTap(i)}
               className="flex items-stretch cursor-pointer transition-all group"
               style={{
-                background: hoveredLine === i
+                background: activeLine === i
                   ? `${step.color || accent}12`
                   : step.highlight
                   ? `${step.color || accent}08`
                   : "transparent",
                 borderLeft: step.highlight
                   ? `3px solid ${step.color || accent}`
-                  : hoveredLine === i
+                  : activeLine === i
                   ? `3px solid ${step.color || accent}80`
                   : "3px solid transparent",
               }}
             >
               {/* Line number */}
-              <div className="w-9 py-2 flex items-start justify-end pr-3 shrink-0 select-none">
-                <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)", opacity: 0.5 }}>
+              <div className="w-7 sm:w-9 py-2 flex items-start justify-end pr-2 sm:pr-3 shrink-0 select-none">
+                <span className="text-[9px] sm:text-[10px] font-mono" style={{ color: "var(--text-tertiary)", opacity: 0.5 }}>
                   {step.isComment ? "" : i + 1}
                 </span>
               </div>
               {/* Code */}
-              <div className="flex-1 py-2 pr-4 min-w-0">
-                <pre className="text-[12px] font-mono whitespace-pre-wrap break-all leading-5"
+              <div className="flex-1 py-2 pr-2 sm:pr-4 min-w-0">
+                <pre className="text-[10px] sm:text-[12px] font-mono whitespace-pre-wrap break-all leading-5"
                   style={{
                     color: step.isComment
                       ? "var(--text-tertiary)"
@@ -84,7 +96,7 @@ export default function DataFlowTrace({ title, scenario, steps, accent = "#3b82f
               </div>
               {/* Variable badge (shown inline if variable present) */}
               {step.variable && (
-                <div className="flex items-center pr-3 shrink-0">
+                <div className="hidden sm:flex items-center pr-3 shrink-0">
                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{ background: `${accent}20`, color: accent }}>
                     {step.variable}
@@ -96,36 +108,36 @@ export default function DataFlowTrace({ title, scenario, steps, accent = "#3b82f
         </div>
 
         {/* RIGHT: Live explanation panel */}
-        <div className="p-4">
+        <div className="p-3 sm:p-4 data-flow-explanation" style={{ borderColor: "var(--border-secondary)" }}>
           <AnimatePresence mode="wait">
-            {hoveredLine !== null ? (
+            {activeLine !== null ? (
               <motion.div
-                key={hoveredLine}
+                key={activeLine}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="rounded-xl p-4" style={{ background: `${steps[hoveredLine]?.color || accent}10`, border: `1px solid ${steps[hoveredLine]?.color || accent}25` }}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider mb-2"
-                    style={{ color: steps[hoveredLine]?.color || accent }}>
-                    Line {hoveredLine + 1} — What happens here
+                <div className="rounded-xl p-3 sm:p-4" style={{ background: `${steps[activeLine]?.color || accent}10`, border: `1px solid ${steps[activeLine]?.color || accent}25` }}>
+                  <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-2"
+                    style={{ color: steps[activeLine]?.color || accent }}>
+                    Line {activeLine + 1} — What happens here
                   </div>
-                  <div className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-primary)" }}>
-                    {steps[hoveredLine]?.explain}
+                  <div className="text-[11px] sm:text-xs leading-relaxed mb-3" style={{ color: "var(--text-primary)" }}>
+                    {steps[activeLine]?.explain}
                   </div>
-                  {steps[hoveredLine]?.variable && (
-                    <div className="rounded-lg p-3 mt-2" style={{ background: "var(--bg-code)", border: "1px solid var(--border-primary)" }}>
+                  {steps[activeLine]?.variable && (
+                    <div className="rounded-lg p-2 sm:p-3 mt-2" style={{ background: "var(--bg-code)", border: "1px solid var(--border-primary)" }}>
                       <div className="text-[9px] uppercase font-bold mb-1.5" style={{ color: "var(--text-tertiary)" }}>
                         Variable state after this line
                       </div>
-                      <div className="flex items-center gap-2">
-                        <code className="text-[11px] font-bold" style={{ color: steps[hoveredLine]?.color || accent }}>
-                          {steps[hoveredLine]?.variable}
+                      <div className="flex items-start sm:items-center gap-1 sm:gap-2 flex-col sm:flex-row">
+                        <code className="text-[10px] sm:text-[11px] font-bold" style={{ color: steps[activeLine]?.color || accent }}>
+                          {steps[activeLine]?.variable}
                         </code>
-                        <span style={{ color: "var(--text-tertiary)" }}>=</span>
-                        <code className="text-[11px]" style={{ color: "#10b981" }}>
-                          {steps[hoveredLine]?.value || "—"}
+                        <span className="hidden sm:inline" style={{ color: "var(--text-tertiary)" }}>=</span>
+                        <code className="text-[10px] sm:text-[11px] break-all" style={{ color: "#10b981" }}>
+                          {steps[activeLine]?.value || "—"}
                         </code>
                       </div>
                     </div>
@@ -137,22 +149,23 @@ export default function DataFlowTrace({ title, scenario, steps, accent = "#3b82f
                 key="idle"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="h-full flex flex-col items-center justify-center text-center py-8"
+                className="h-full flex flex-col items-center justify-center text-center py-4 sm:py-8"
               >
-                <div className="text-4xl mb-3">👆</div>
-                <div className="text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>
-                  Hover a code line to see
+                <div className="text-3xl sm:text-4xl mb-3">👆</div>
+                <div className="text-[11px] sm:text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>
+                  <span className="hidden sm:inline">Hover</span>
+                  <span className="sm:hidden">Tap</span> a code line to see
                 </div>
                 <div className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>
                   what the variable holds at that exact point
                 </div>
                 {/* Static summary of all variables */}
-                <div className="mt-6 w-full space-y-1.5">
+                <div className="mt-4 sm:mt-6 w-full space-y-1.5">
                   {steps.filter(s => s.variable && s.value).map((s, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-lg px-3 py-1.5 text-[10px]"
+                    <div key={i} className="flex items-center justify-between rounded-lg px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] gap-2"
                       style={{ background: `${s.color || accent}08`, border: `1px solid ${s.color || accent}15` }}>
-                      <code className="font-bold" style={{ color: s.color || accent }}>{s.variable}</code>
-                      <code style={{ color: "#10b981" }}>{s.value}</code>
+                      <code className="font-bold truncate" style={{ color: s.color || accent }}>{s.variable}</code>
+                      <code className="truncate text-right" style={{ color: "#10b981" }}>{s.value}</code>
                     </div>
                   ))}
                 </div>

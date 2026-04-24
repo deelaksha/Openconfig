@@ -81,12 +81,12 @@ export default function VerificationSection() {
             className="rounded-xl border overflow-hidden"
             style={{ borderColor: `${item.c}25` }}
           >
-            <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: `${item.c}08` }}>
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+            <div className="px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2" style={{ background: `${item.c}08` }}>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center text-white text-[9px] sm:text-[10px] font-bold shrink-0"
                 style={{ background: item.c }}>{item.n}</div>
-              <span className="text-xs font-semibold" style={{ color: item.c }}>{item.check}</span>
+              <span className="text-[11px] sm:text-xs font-semibold leading-tight" style={{ color: item.c }}>{item.check}</span>
             </div>
-            <div className="px-4 py-3 space-y-2" style={{ background: "var(--bg-card)" }}>
+            <div className="px-3 sm:px-4 py-2 sm:py-3 space-y-2" style={{ background: "var(--bg-card)" }}>
               <div className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
                 <strong style={{ color: "var(--text-primary)" }}>How to check: </strong>{item.how}
               </div>
@@ -106,8 +106,8 @@ export default function VerificationSection() {
       </div>
 
       {/* Common mistakes */}
-      <div className="rounded-2xl border p-5 my-6" style={{ borderColor: "#ef444430", background: "#ef444404" }}>
-        <div className="text-xs font-bold mb-3" style={{ color: "#ef4444" }}>🐛 Top 5 Most Common Bugs</div>
+      <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-5 my-4 sm:my-6" style={{ borderColor: "#ef444430", background: "#ef444404" }}>
+        <div className="text-xs font-bold mb-2 sm:mb-3" style={{ color: "#ef4444" }}>🐛 Top 5 Most Common Bugs</div>
         <div className="space-y-2">
           {[
             { bug: "Missing module prefix on a deviation path node", fix: "Add prefix to EVERY /node in the path: /oc-if:interfaces/oc-if:interface/oc-if:config/oc-if:enabled" },

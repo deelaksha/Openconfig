@@ -15,9 +15,9 @@ export default function AnnotationAnatomy() {
       </p>
 
       {/* File naming rule */}
-      <div className="rounded-2xl border p-5 my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
+      <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-5 my-4 sm:my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
         <div className="text-xs font-semibold mb-3" style={{ color: "var(--text-primary)" }}>📂 File Naming Convention</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
           {[
             { model: "openconfig-interfaces.yang", annot: "openconfig-interfaces-annot.yang", c: "#3b82f6" },
             { model: "openconfig-vlan.yang", annot: "openconfig-vlan-annot.yang", c: "#8b5cf6" },
@@ -78,8 +78,8 @@ export default function AnnotationAnatomy() {
       />
 
       {/* The 4 golden rules */}
-      <div className="rounded-2xl border p-5 my-6" style={{ borderColor: "#f59e0b30", background: "#f59e0b04" }}>
-        <div className="text-xs font-bold mb-4" style={{ color: "#f59e0b" }}>⚡ 4 Golden Rules — Never Break These</div>
+      <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-5 my-4 sm:my-6" style={{ borderColor: "#f59e0b30", background: "#f59e0b04" }}>
+        <div className="text-xs font-bold mb-3 sm:mb-4" style={{ color: "#f59e0b" }}>⚡ 4 Golden Rules — Never Break These</div>
         <div className="space-y-3">
           {[
             { n: "1", rule: "Every node in the deviation path MUST have its module prefix", ok: "/oc-if:interfaces/oc-if:interface/oc-if:config/oc-if:enabled", bad: "/interfaces/interface/config/enabled", c: "#ef4444" },

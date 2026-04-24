@@ -25,9 +25,9 @@ export default function SubtreeXfmrSection() {
       </div>
 
       {/* Why subtree is needed visual */}
-      <div className="rounded-2xl border p-5 my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
+      <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-5 my-4 sm:my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
         <div className="text-xs font-bold mb-3" style={{ color: "var(--text-primary)" }}>🤔 Why ACL needs a subtree transformer</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 text-xs">
           <div>
             <div className="font-bold mb-2" style={{ color: "#3b82f6" }}>OpenConfig: 1 tree</div>
             <div className="font-mono text-[10px] p-3 rounded-lg space-y-0.5" style={{ background: "var(--bg-code)", color: "var(--text-secondary)" }}>
@@ -182,7 +182,7 @@ export default function SubtreeXfmrSection() {
       />
 
       {/* Return type diagram */}
-      <div className="rounded-2xl border p-5 my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
+      <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-5 my-4 sm:my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
         <div className="text-xs font-bold mb-3" style={{ color: "var(--text-primary)" }}>📦 Subtree Return Type Visualized</div>
         <div className="font-mono text-[11px] space-y-1" style={{ color: "var(--text-secondary)" }}>
           <div>map[string] <span style={{ color: "#8b5cf6" }}>// map key = Redis TABLE name</span></div>
@@ -330,6 +330,82 @@ export default function SubtreeXfmrSection() {
             explain: 'Returns the complete result map with 2 table entries. Translib writes both in one atomic Redis transaction: HSET ACL_TABLE|MY_ACL type "L3" ... and HSET ACL_RULE|MY_ACL|RULE_10 SRC_IP "10.0.0.0/8" ...',
             variable: "Redis writes (atomic)",
             value: "ACL_TABLE|MY_ACL + ACL_RULE|MY_ACL|RULE_10",
+            color: "#10b981",
+            highlight: true,
+          },
+        ]}
+      />
+
+      <h3>🔬 Data Flow Trace — acl_sets_xfmr GET direction (hover any line)</h3>
+      <p>
+        Client sends: <code>GET /acl/acl-sets/acl-set[name=MY_ACL]</code>.
+        The subtree transformer reads from BOTH Redis tables and builds the OpenConfig response tree.
+      </p>
+      <DataFlowTrace
+        title="acl_sets_xfmr — GET direction (reads 2 Redis tables → builds OC tree)"
+        scenario="gNMI GET: Read ACL MY_ACL with all rules"
+        accent="#3b82f6"
+        steps={[
+          {
+            line: "var acl_sets_xfmr SubtreeXfmrFunc = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {",
+            explain: "Translib calls this. inParams.oper=GET, inParams.uri contains [name=MY_ACL]. For GET, the function must read from Redis and populate the ygRoot OC tree.",
+            variable: "inParams.oper / inParams.uri",
+            value: 'GET / "/acl/acl-sets/acl-set[name=MY_ACL]"',
+            color: "#3b82f6",
+          },
+          {
+            line: "    } else if inParams.oper == GET {",
+            explain: "oper IS GET, so we enter this branch. The goal is to read from Redis tables and build the OpenConfig response tree.",
+            variable: "branch taken",
+            value: "GET block",
+            color: "#3b82f6",
+            highlight: true,
+          },
+          {
+            line: '        aclName := pathInfo.Var("name")',
+            explain: 'Extract ACL name from path. aclName = "MY_ACL".',
+            variable: "aclName",
+            value: '"MY_ACL"',
+            color: "#3b82f6",
+            highlight: true,
+          },
+          {
+            line: '        aclEntry, _ := inParams.dbs[db.ConfigDB].GetEntry(&db.TableSpec{Name: "ACL_TABLE"}, db.Key{Comp: []string{aclName}})',
+            explain: 'Read ACL_TABLE|MY_ACL from CONFIG_DB. Returns the hash entry with type and policy_desc fields.',
+            variable: "aclEntry",
+            value: '{ type: "L3", policy_desc: "My ACL" }',
+            color: "#8b5cf6",
+            highlight: true,
+          },
+          {
+            line: '        ruleKeys, _ := inParams.dbs[db.ConfigDB].GetKeys(&db.TableSpec{Name: "ACL_RULE"})',
+            explain: 'Get all keys from ACL_RULE table. Filter for keys starting with MY_ACL| to find rules belonging to this ACL.',
+            variable: "ruleKeys (filtered)",
+            value: '["MY_ACL|RULE_10"]',
+            color: "#f59e0b",
+            highlight: true,
+          },
+          {
+            line: '        ruleEntry, _ := inParams.dbs[db.ConfigDB].GetEntry(&db.TableSpec{Name: "ACL_RULE"}, ruleKey)',
+            explain: 'Read each matching rule entry. For MY_ACL|RULE_10, get the SRC_IP, PACKET_ACTION, PRIORITY fields.',
+            variable: "ruleEntry",
+            value: '{ SRC_IP: "10.0.0.0/8", PACKET_ACTION: "FORWARD", PRIORITY: "10" }',
+            color: "#f59e0b",
+            highlight: true,
+          },
+          {
+            line: "        // Populate ygRoot with the OC struct",
+            explain: "Build the OpenConfig tree: set aclSet.Config.Name, aclSet.Config.Type (convert L3→enum), create AclEntry with sequence-id=10, source-address, forwarding-action.",
+            variable: "ygRoot (OC tree)",
+            value: "{ name: MY_ACL, type: ACL_IPV4, entries: [{seq:10, src:10.0.0.0/8, action:ACCEPT}] }",
+            color: "#10b981",
+            highlight: true,
+          },
+          {
+            line: "    return result, nil",
+            explain: "For GET, result map can be empty — the OC tree was populated directly via ygRoot. Translib serializes ygRoot into the gNMI GET response JSON.",
+            variable: "gNMI response",
+            value: '{ "acl-set": { "name": "MY_ACL", "type": "ACL_IPV4", "acl-entries": [...] } }',
             color: "#10b981",
             highlight: true,
           },

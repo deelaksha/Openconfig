@@ -128,16 +128,16 @@ export default function FieldXfmrSection() {
         ]}
       />
 
-      <div className="rounded-2xl border p-4 my-6" style={{ borderColor: "#3b82f630", background: "#3b82f605" }}>
+      <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-4 my-4 sm:my-6" style={{ borderColor: "#3b82f630", background: "#3b82f605" }}>
         <div className="text-xs font-bold mb-3" style={{ color: "#3b82f6" }}>📌 inParams.oper Values Reference</div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           {[
             { op: "GET", desc: "Read — Redis value comes IN via inParams.param", key: "result map keys = OC field names", c: "#3b82f6" },
             { op: "SET", desc: "Write — OC value comes IN via inParams.param", key: "result map keys = Redis field names", c: "#f59e0b" },
             { op: "DELETE", desc: "Delete operation — usually return empty map", key: "Translib handles the Redis DEL command", c: "#ef4444" },
             { op: "REPLACE", desc: "Replace (same as SET for most cases)", key: "Handle same as SET unless you need to clear old fields", c: "#8b5cf6" },
           ].map((item) => (
-            <div key={item.op} className="rounded-lg p-3" style={{ background: "var(--bg-code)", border: `1px solid ${item.c}20` }}>
+            <div key={item.op} className="rounded-lg p-2.5 sm:p-3" style={{ background: "var(--bg-code)", border: `1px solid ${item.c}20` }}>
               <code className="text-[11px] font-bold" style={{ color: item.c }}>{item.op}</code>
               <div className="text-[10px] mt-1" style={{ color: "var(--text-secondary)" }}>{item.desc}</div>
               <div className="text-[10px] mt-1 italic" style={{ color: "var(--text-tertiary)" }}>{item.key}</div>

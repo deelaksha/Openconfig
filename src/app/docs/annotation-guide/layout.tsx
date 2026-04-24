@@ -1,26 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import Navbar from "@/components/navbar/Navbar";
 import GuideSidebar from "@/components/sidebar/GuideSidebar";
 
 export default function AnnotationGuideLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
-      <Navbar
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        sidebarOpen={sidebarOpen}
-      />
-      <div className="flex">
-        <GuideSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 min-w-0 max-w-4xl mx-auto px-4 sm:px-8 py-8">
-          <div className="prose">
-            {children}
-          </div>
-        </main>
-      </div>
+    <div className="flex">
+      <GuideSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <main className="flex-1 min-w-0 max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="prose">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

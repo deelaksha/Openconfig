@@ -54,21 +54,21 @@ export default function DecisionTree() {
             className="rounded-2xl border overflow-hidden"
             style={{ borderColor: "var(--border-primary)" }}
           >
-            <div className="px-5 py-3 flex items-center gap-3" style={{ background: "var(--bg-tertiary)" }}>
-              <span className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+            <div className="px-3 sm:px-5 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3" style={{ background: "var(--bg-tertiary)" }}>
+              <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-[10px] sm:text-xs font-bold shrink-0"
                 style={{ background: "var(--accent-blue)" }}>{i + 1}</span>
-              <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Q: {node.q}</span>
+              <span className="text-[11px] sm:text-sm font-semibold leading-tight" style={{ color: "var(--text-primary)" }}>Q: {node.q}</span>
             </div>
-            <div className="px-5 py-3 grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ background: "var(--bg-card)" }}>
-              <div className="flex items-center gap-2 rounded-xl px-4 py-3"
+            <div className="px-3 sm:px-5 py-2.5 sm:py-3 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3" style={{ background: "var(--bg-card)" }}>
+              <div className="flex items-center gap-2 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3"
                 style={{ background: `${node.yesC}08`, border: `1px solid ${node.yesC}20` }}>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ background: node.yesC }}>YES</span>
-                <span className="text-xs font-semibold" style={{ color: node.yesC }}>{node.yes}</span>
+                <span className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full text-white shrink-0" style={{ background: node.yesC }}>YES</span>
+                <span className="text-[11px] sm:text-xs font-semibold" style={{ color: node.yesC }}>{node.yes}</span>
               </div>
-              <div className="flex items-center gap-2 rounded-xl px-4 py-3"
+              <div className="flex items-center gap-2 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3"
                 style={{ background: "var(--bg-code)", border: "1px solid var(--border-primary)" }}>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)" }}>NO</span>
-                <span className="text-xs" style={{ color: "var(--text-secondary)" }}>{node.no}</span>
+                <span className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full shrink-0" style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)" }}>NO</span>
+                <span className="text-[11px] sm:text-xs" style={{ color: "var(--text-secondary)" }}>{node.no}</span>
               </div>
             </div>
           </motion.div>

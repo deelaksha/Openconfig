@@ -117,9 +117,9 @@ export default function TableXfmrSection() {
         ]}
       />
 
-      <div className="rounded-2xl border p-4 my-6" style={{ borderColor: "#ef444430", background: "#ef444405" }}>
+      <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-4 my-4 sm:my-6" style={{ borderColor: "#ef444430", background: "#ef444405" }}>
         <div className="text-xs font-bold mb-2" style={{ color: "#ef4444" }}>⚠️ table-name vs table-transformer — never mix them</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs">
           <div className="rounded-lg p-3" style={{ background: "#10b98108", border: "1px solid #10b98120" }}>
             <div className="font-bold mb-1" style={{ color: "#10b981" }}>✓ Correct: one or the other</div>
             <div className="font-mono text-[10px] space-y-0.5" style={{ color: "var(--text-secondary)" }}>

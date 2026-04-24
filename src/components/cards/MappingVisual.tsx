@@ -29,27 +29,30 @@ export default function MappingVisual({
 }: MappingVisualProps) {
   return (
     <div
-      className="rounded-2xl border p-6 my-6 overflow-hidden"
+      className="rounded-xl sm:rounded-2xl border p-3 sm:p-6 my-4 sm:my-6 overflow-hidden"
       style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}
     >
       {title && (
-        <h4 className="text-sm font-semibold mb-5 text-center" style={{ color: "var(--text-primary)" }}>
+        <h4 className="text-xs sm:text-sm font-semibold mb-3 sm:mb-5 text-center" style={{ color: "var(--text-primary)" }}>
           {title}
         </h4>
       )}
 
       {/* Headers */}
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
         <div className="flex-1 text-center">
-          <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full"
+          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 sm:px-3 py-1 rounded-full inline-block"
             style={{ color: leftColor, background: `${leftColor}15` }}
           >
             {leftTitle}
           </span>
         </div>
-        <div className="w-16 text-center text-xs" style={{ color: "var(--text-tertiary)" }}>maps to</div>
+        <div className="w-8 sm:w-16 text-center text-[10px] sm:text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
+          <span className="hidden sm:inline">maps to</span>
+          <span className="sm:hidden">→</span>
+        </div>
         <div className="flex-1 text-center">
-          <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full"
+          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 sm:px-3 py-1 rounded-full inline-block"
             style={{ color: rightColor, background: `${rightColor}15` }}
           >
             {rightTitle}
@@ -66,11 +69,11 @@ export default function MappingVisual({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.3, delay: i * 0.08 }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1 sm:gap-2"
           >
             {/* Left value */}
-            <div className="flex-1 text-right">
-              <code className="text-xs font-mono px-2.5 py-1.5 rounded-lg inline-block"
+            <div className="flex-1 text-right min-w-0">
+              <code className="text-[10px] sm:text-xs font-mono px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg inline-block max-w-full truncate"
                 style={{ background: `${leftColor}10`, color: leftColor, border: `1px solid ${leftColor}20` }}
               >
                 {row.left}
@@ -78,20 +81,20 @@ export default function MappingVisual({
             </div>
 
             {/* Arrow with optional label */}
-            <div className="w-16 flex flex-col items-center gap-0.5 shrink-0">
-              <svg width="40" height="12" viewBox="0 0 40 12" fill="none" className="opacity-40">
+            <div className="w-8 sm:w-16 flex flex-col items-center gap-0.5 shrink-0">
+              <svg width="24" height="12" viewBox="0 0 40 12" fill="none" className="opacity-40 sm:w-10 w-6">
                 <path d="M0 6H36M36 6L30 1M36 6L30 11" stroke={row.color || "var(--text-tertiary)"} strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
               {row.label && (
-                <span className="text-[8px] font-medium" style={{ color: row.color || "var(--text-tertiary)" }}>
+                <span className="text-[7px] sm:text-[8px] font-medium" style={{ color: row.color || "var(--text-tertiary)" }}>
                   {row.label}
                 </span>
               )}
             </div>
 
             {/* Right value */}
-            <div className="flex-1">
-              <code className="text-xs font-mono px-2.5 py-1.5 rounded-lg inline-block"
+            <div className="flex-1 min-w-0">
+              <code className="text-[10px] sm:text-xs font-mono px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg inline-block max-w-full truncate"
                 style={{ background: `${rightColor}10`, color: rightColor, border: `1px solid ${rightColor}20` }}
               >
                 {row.right}

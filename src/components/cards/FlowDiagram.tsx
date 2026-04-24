@@ -7,87 +7,65 @@ interface FlowStep {
   label: string;
   sublabel?: string;
   color: string;
-  icon?: React.ReactNode;
   detail?: string;
 }
 
 interface FlowDiagramProps {
+  title: string;
   steps: FlowStep[];
-  title?: string;
-  direction?: "horizontal" | "vertical";
 }
 
-export default function FlowDiagram({ steps, title, direction = "horizontal" }: FlowDiagramProps) {
-  const isVertical = direction === "vertical";
-
+export default function FlowDiagram({ title, steps }: FlowDiagramProps) {
   return (
-    <div
-      className="rounded-2xl border p-6 sm:p-8 my-6 overflow-x-auto"
-      style={{
-        borderColor: "var(--border-primary)",
-        background: "var(--bg-card)",
-        boxShadow: "var(--shadow-md)",
-      }}
-    >
-      {title && (
-        <h4 className="text-sm font-semibold mb-6 text-center" style={{ color: "var(--text-primary)" }}>
-          {title}
-        </h4>
-      )}
-      <div className={`flex ${isVertical ? "flex-col items-center" : "flex-row flex-wrap items-center justify-center"} gap-2 sm:gap-3`}>
-        {steps.map((step, i) => (
-          <React.Fragment key={i}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.12 }}
-              className="flex flex-col items-center gap-2 min-w-[110px] max-w-[160px]"
-            >
-              {/* Circle icon */}
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg font-bold shadow-lg"
-                style={{ background: step.color }}
+    <div className="rounded-xl sm:rounded-2xl border p-4 sm:p-6 my-4 sm:my-6 overflow-hidden"
+      style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
+      <h4 className="text-xs sm:text-sm font-semibold mb-4 sm:mb-5 text-center" style={{ color: "var(--text-primary)" }}>
+        {title}
+      </h4>
+
+      {/* Horizontal scrollable on mobile */}
+      <div className="overflow-x-auto -mx-2 px-2 pb-2 flow-diagram-scroll">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-max sm:min-w-0 sm:justify-center">
+          {steps.map((step, i) => (
+            <React.Fragment key={i}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex flex-col items-center text-center shrink-0"
               >
-                {step.icon || (i + 1)}
-              </div>
-              <div className="text-center">
-                <div className="text-xs font-semibold" style={{ color: step.color }}>
-                  {step.label}
-                </div>
-                {step.sublabel && (
-                  <div className="text-[10px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
-                    {step.sublabel}
-                  </div>
-                )}
-              </div>
-              {step.detail && (
                 <div
-                  className="text-[10px] text-center px-2 py-1 rounded-lg max-w-[140px]"
-                  style={{ background: `${step.color}10`, color: "var(--text-secondary)" }}
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center mb-1 sm:mb-2"
+                  style={{ background: `${step.color}12`, border: `1px solid ${step.color}30` }}
                 >
-                  {step.detail}
+                  <span className="text-[10px] sm:text-xs font-bold" style={{ color: step.color }}>
+                    {step.label}
+                  </span>
+                  {step.sublabel && (
+                    <span className="text-[8px] sm:text-[9px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+                      {step.sublabel}
+                    </span>
+                  )}
+                </div>
+                {step.detail && (
+                  <span className="text-[8px] sm:text-[10px] font-mono max-w-[5rem] sm:max-w-[7rem] truncate"
+                    style={{ color: "var(--text-tertiary)" }}>
+                    {step.detail}
+                  </span>
+                )}
+              </motion.div>
+
+              {i < steps.length - 1 && (
+                <div className="shrink-0">
+                  <svg width="20" height="12" viewBox="0 0 24 12" fill="none" className="opacity-30 sm:w-6 w-5">
+                    <path d="M0 6H20M20 6L14 1M20 6L14 11" stroke="var(--text-tertiary)" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
                 </div>
               )}
-            </motion.div>
-
-            {/* Arrow between steps */}
-            {i < steps.length - 1 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: i * 0.12 + 0.1 }}
-                className={`flex items-center justify-center ${isVertical ? "rotate-90" : ""}`}
-                style={{ color: "var(--text-tertiary)" }}
-              >
-                <svg width="28" height="16" viewBox="0 0 28 16" fill="none">
-                  <path d="M0 8H24M24 8L18 2M24 8L18 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </motion.div>
-            )}
-          </React.Fragment>
-        ))}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -12,8 +12,8 @@ export default function PrePostXfmrSection() {
         They are used for cross-field validation, dependency checks, and side effects — not for primary value mapping.
       </p>
 
-      <div className="rounded-2xl border p-5 my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
-        <div className="text-xs font-bold mb-4" style={{ color: "var(--text-primary)" }}>⚡ Execution Order on Every Request</div>
+      <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-5 my-4 sm:my-6" style={{ borderColor: "var(--border-primary)", background: "var(--bg-card)" }}>
+        <div className="text-xs font-bold mb-3 sm:mb-4" style={{ color: "var(--text-primary)" }}>⚡ Execution Order on Every Request</div>
         <div className="space-y-2">
           {[
             { order: "1st", name: "Table Transformer", when: "Decides which Redis table(s)", type: "oc-ext:table-transformer", c: "#8b5cf6" },
@@ -23,12 +23,12 @@ export default function PrePostXfmrSection() {
             { order: "5th", name: "Post Transformer", when: "Runs AFTER field transformers — cross-field logic", type: "sonic-ext:post-transformer", c: "#ec4899" },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-white text-[9px] sm:text-[10px] font-bold shrink-0"
                 style={{ background: item.c }}>{item.order}</div>
-              <div className="flex-1 rounded-xl px-3 py-2" style={{ background: `${item.c}06`, border: `1px solid ${item.c}15` }}>
+              <div className="flex-1 rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2" style={{ background: `${item.c}06`, border: `1px solid ${item.c}15` }}>
                 <div className="flex items-center justify-between flex-wrap gap-1">
-                  <span className="text-xs font-semibold" style={{ color: item.c }}>{item.name}</span>
-                  <code className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: `${item.c}15`, color: item.c }}>{item.type}</code>
+                  <span className="text-[11px] sm:text-xs font-semibold" style={{ color: item.c }}>{item.name}</span>
+                  <code className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded" style={{ background: `${item.c}15`, color: item.c }}>{item.type}</code>
                 </div>
                 <div className="text-[10px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>{item.when}</div>
               </div>
@@ -129,7 +129,7 @@ export default function PrePostXfmrSection() {
         ]}
       />
 
-      <div className="rounded-2xl border p-4 my-6" style={{ borderColor: "#ec489930", background: "#ec489905" }}>
+      <div className="rounded-xl sm:rounded-2xl border p-3 sm:p-4 my-4 sm:my-6" style={{ borderColor: "#ec489930", background: "#ec489905" }}>
         <div className="text-xs font-bold mb-2" style={{ color: "#ec4899" }}>📌 Pre vs Post — When to use which</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div className="space-y-1.5" style={{ color: "var(--text-secondary)" }}>
@@ -207,6 +207,47 @@ export default function PrePostXfmrSection() {
             variable: "return value",
             value: "nil → proceed to field transformers",
             color: "#10b981",
+            highlight: true,
+          },
+        ]}
+      />
+
+      <h3>🔬 Data Flow Trace — intf_pre_xfmr REJECTION (hover any line)</h3>
+      <p>Scenario B (rejected): <code>SET /interfaces/interface[name=Mgmt0]/config/mtu = 1500</code></p>
+      <DataFlowTrace
+        title="intf_pre_xfmr — rejects management interface writes"
+        scenario="SET for Mgmt0 — rejected by pre transformer"
+        accent="#ef4444"
+        steps={[
+          {
+            line: "var intf_pre_xfmr PreXfmrFunc = func(inParams XfmrParams) error {",
+            explain: "Translib calls this before any field transformer. inParams.uri contains [name=Mgmt0].",
+            variable: "inParams.uri",
+            value: '"/interfaces/interface[name=Mgmt0]/config/mtu"',
+            color: "#f97316",
+          },
+          {
+            line: '    intfName := pathInfo.Var("name")',
+            explain: "Extract the interface name from the path. intfName = 'Mgmt0'.",
+            variable: "intfName",
+            value: '"Mgmt0"',
+            color: "#3b82f6",
+            highlight: true,
+          },
+          {
+            line: '    if strings.HasPrefix(intfName, "Mgmt") {',
+            explain: 'strings.HasPrefix("Mgmt0", "Mgmt") = TRUE. This is a management interface — we block it.',
+            variable: 'HasPrefix("Mgmt0", "Mgmt")',
+            value: "true → ENTER rejection block",
+            color: "#ef4444",
+            highlight: true,
+          },
+          {
+            line: '        return errors.New("cannot configure management interface via OC")',
+            explain: "Return a non-nil error. This ABORTS the entire operation. Translib will NOT call any field transformers, post transformer, or write to Redis. The gNMI client receives a 403 error.",
+            variable: "return value",
+            value: 'error: "cannot configure management interface via OC" → 403 to client',
+            color: "#ef4444",
             highlight: true,
           },
         ]}
