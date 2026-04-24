@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Zap, Cpu, Database, FileCode, Repeat } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import Navbar from "@/components/navbar/Navbar";
 import FlowDiagram from "@/components/cards/FlowDiagram";
 
@@ -69,10 +69,10 @@ export default function HomePage() {
         <FlowDiagram
           title="OpenConfig → SONiC Redis Pipeline"
           steps={[
-            { label: "YANG Model", sublabel: "enabled: boolean", color: "#3b82f6", icon: <Cpu size={18} /> },
-            { label: "Annotation", sublabel: ".yang deviation", color: "#8b5cf6", icon: <FileCode size={18} /> },
-            { label: "Transformer", sublabel: "true → \"up\"", color: "#f59e0b", icon: <Repeat size={18} /> },
-            { label: "Redis DB", sublabel: "CONFIG_DB", color: "#10b981", icon: <Database size={18} /> },
+            { label: "YANG Model", sublabel: "enabled: boolean", color: "#3b82f6", detail: "leaf boolean" },
+            { label: "Annotation", sublabel: ".yang deviation", color: "#8b5cf6", detail: "oc-ext mapping" },
+            { label: "Transformer", sublabel: 'true → "up"', color: "#f59e0b", detail: "Go function" },
+            { label: "Redis DB", sublabel: "CONFIG_DB", color: "#10b981", detail: "PORT|Ethernet0" },
           ]}
         />
 
